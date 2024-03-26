@@ -1,9 +1,6 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Mvc;
-using NuGet.Protocol;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Chonye.API.Controllers
 {
@@ -12,95 +9,85 @@ namespace Chonye.API.Controllers
     public class OpenAIController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        OpenAIClient _client;
+        private readonly OpenAIClient _client;
+        //private readonly SearchClient _searchClient;
 
         public OpenAIController(IConfiguration configuration)
         {
             _configuration = configuration;
             _client = new OpenAIClient(new Uri(_configuration["OpenAI:Uri"]),
                 new AzureKeyCredential(_configuration["OpenAI:ApiKey"])
-                );
+            );
+
+            var searchServiceName = _configuration["SearchServiceName"];
+            //var searchIndexName = _configuration["SearchIndexName"];
+            //var searchApiKey = _configuration["SearchApiKey"];
+            //var searchServiceUri = new Uri($"https://{searchServiceName}.search.windows.net");
+
+            //_searchClient = new SearchClient(searchServiceUri, searchIndexName, new AzureKeyCredential(searchApiKey));
         }
 
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> Ask([FromQuery] string request)
+        public async Task<IActionResult> GetOpenAIResponseAsync([FromQuery] string request)
         {
-
-            //CompletionsOptions completionsOptions = new()
-            //{
-            //    DeploymentName = "deploy35turbo",
-            //};
-
-            ChatCompletionsOptions chatCompletionsOptions = new()
+            try
             {
-                DeploymentName = _configuration["OpenAI:Model"],
-                Messages =
+                // Azure OpenAI setup
+                var apiBase = _configuration["OpenAI:Uri"];
+                var apiKey = _configuration["OpenAI:ApiKey"];
+                var deploymentId = _configuration["OpenAI:Model"];
+
+                // Azure AI Search setup
+                var searchEndpoint = _configuration["OpenAI:SearchUri"];
+                var searchKey = _configuration["OpenAI:SearchKey"];
+                var searchIndexName = _configuration["OpenAI:SearchIndexName"];
+                
+                var chatCompletionsOptions = new ChatCompletionsOptions()
+                {
+                    Messages =
                     {
-                        new ChatMessage(ChatRole.System, @"You are an AI assistant that return information on a raw json document format without explanation"),
-                        new ChatMessage(ChatRole.User, @"Top 5 richest countries by gdp"),
-                        //new ChatMessage(ChatRole.User, @"Top 5 richest countries return the data on a dictionary that have a string and a long"),
-                        new ChatMessage(ChatRole.Assistant, request),
-                        
+                        new ChatRequestSystemMessage("Soy ChonchAI, tu asistente comercial como te puedo ayudar hoy?"),
+                        new ChatRequestUserMessage("Que incluye el Smart Center Basico"),
+                        new ChatRequestAssistantMessage("4 agentes, 4 puertos y un supervisor"),
+                        new ChatRequestUserMessage("Que costo tiene"),
+                        new ChatRequestAssistantMessage("Tiene un costo de USD 242"),
+                        new ChatRequestUserMessage(request),
+    
                     },
-                Temperature = (float)0.2,
-                MaxTokens = 350,
-                NucleusSamplingFactor = (float)0.95,
-                FrequencyPenalty = 0,
-                PresencePenalty = 0,
-            };
+                    AzureExtensionsOptions = new AzureChatExtensionsOptions()
+                    {
+                        Extensions =
+                        {
+                            new AzureCognitiveSearchChatExtensionConfiguration()
+                            {
+                                SearchEndpoint = new Uri(searchEndpoint),
+                                IndexName = searchIndexName,
+                                Key = searchKey,
+                                //QueryType = "AzureCognitiveSearch",
+                                //Parameters = FromString([object Object])
+                            },
+                        },
+                    },
+                    DeploymentName = deploymentId,
+                    MaxTokens = 800,
+                    Temperature = 0,
+                };
 
-            Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(chatCompletionsOptions);
+                var response = await _client.GetChatCompletionsAsync(chatCompletionsOptions);
 
-            ChatCompletions completions = responseWithoutStream.Value;
-            var respuesta = completions.Choices[0].Message.Content;
-            var conelyei =respuesta.ToJson();
-            return Ok(completions.Choices[0].Message.Content);
+                var message = response.Value.Choices[0].Message;
 
+                var contextMessages = message.AzureExtensionsContext;
+
+                return Ok(message.Content);
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception appropriately
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
-
-        //[HttpGet("generate")]
-        //[NonAction]
-        //public async Task<IActionResult> GenerateChart([FromQuery] ChartGenerationRequest request)
-        //{
-        //    try
-        //    {
-        //        //string prompt = $"Create a chart that {request.Prompt}";
-
-        //        //var completion = await _client.GetChatCompletionsAsync (
-        //        //    model: "davinci",
-        //        //    prompt: prompt,
-        //        //    maxTokens: 100,
-        //        //    temperature: 0.7
-        //        //);
-
-
-        //        Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(_configuration["OpenAI:Model"],new ChatCompletionsOptions()
-        //        {
-        //            Messages =
-        //            {
-
-        //                //new ChatMessage(ChatRole.System, @"you are a service that reply just the message requested and nothing else:"),
-        //                //new ChatMessage(ChatRole.User, @"Top 5 richest countries return the data on a dictionary that have a string and a long"),
-        //                new ChatMessage(ChatRole.System, @"You are an AI assistant that helps people find information."),
-        //                new ChatMessage(ChatRole.User, @"Top 5 richest countries by gdp, Only respond with code as JSON document without explanation"),
-        //            },
-        //            Temperature = (float)0.2,
-        //            MaxTokens = 350,
-        //            NucleusSamplingFactor = (float)0.95,
-        //            FrequencyPenalty = 0,
-        //            PresencePenalty = 0,
-        //        });
-
-
-
-        //        ChatCompletions completions = responseWithoutStream.Value;
-        //        return Ok(completions.Choices[0].Message.Content);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { Error = ex.Message });
-        //    }
-        //}
     }
+
 }
