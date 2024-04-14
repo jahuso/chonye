@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chonye.Core", "Chonye.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chonye.Domain", "Chonye.Domain\Chonye.Domain.csproj", "{C9047A70-A6DA-496B-BCA0-56509596C067}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{58983E00-227A-4BB3-9C09-61CA18EC6DE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C9047A70-A6DA-496B-BCA0-56509596C067}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9047A70-A6DA-496B-BCA0-56509596C067}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9047A70-A6DA-496B-BCA0-56509596C067}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58983E00-227A-4BB3-9C09-61CA18EC6DE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58983E00-227A-4BB3-9C09-61CA18EC6DE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58983E00-227A-4BB3-9C09-61CA18EC6DE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58983E00-227A-4BB3-9C09-61CA18EC6DE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
